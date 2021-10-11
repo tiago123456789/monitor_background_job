@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+
+    database:
+        image: mongo
+        ports:
+            - 27017:27017
+        container_name: database_mongodb
+
+    cache: 
+        image: redis
+        container_name: cache_redis
+        ports:
+            - 6379:6379
