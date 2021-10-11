@@ -3,29 +3,37 @@ package repositories
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
 	"time"
 
 	"github.com/tiago123456789/monitor_background_job/config"
 	"github.com/tiago123456789/monitor_background_job/models"
 	"github.com/tiago123456789/monitor_background_job/queue"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type EventNotificationRepositoryInterface interface {
 	Get(id string) (string, error)
 	StoreLast(eventNotification models.EventNotification) error
+	GetByJobID(jobId string) ([]models.NotificationReceived, error)
 }
 
 type EventNotificationRepository struct {
 	Cache    *config.Cache
 	Producer queue.ProducerInterface
+	Client   *mongo.Client
 }
 
 func NewEventNotificationRepository(
 	cache *config.Cache,
-	producer queue.ProducerInterface) *EventNotificationRepository {
+	producer queue.ProducerInterface,
+	client *mongo.Client) *EventNotificationRepository {
 
 	return &EventNotificationRepository{
-		Cache: cache, Producer: producer,
+		Cache: cache, Producer: producer, Client: client,
 	}
 }
 
@@ -71,6 +79,7 @@ func (e *EventNotificationRepository) StoreLast(id string, jobName string) error
 	}
 
 	e.Cache.Set(context.TODO(), id, string(valueStored))
+	e.Cache.Client.Expire(context.TODO(), id, 10*time.Minute)
 
 	eventNotificationMessage := &models.EventNotificationMessage{
 		CompanyId: id,
@@ -83,4 +92,30 @@ func (e *EventNotificationRepository) StoreLast(id string, jobName string) error
 	}
 
 	return nil
+}
+
+func (e *EventNotificationRepository) GetByJobID(jobId string) ([]models.NotificationReceived, error) {
+	filter := &bson.D{
+		{"jobid", jobId},
+	}
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{"occourat", -1}})
+
+	var results []models.NotificationReceived
+	collection := e.Client.Database("monitor").Collection("notifications_received")
+	ctx := context.TODO()
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	if len(results) == 0 {
+		return nil, errors.New("Empty results")
+	}
+	return results, nil
 }
