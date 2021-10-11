@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 	"github.com/tiago123456789/monitor_background_job/config"
 	"github.com/tiago123456789/monitor_background_job/models"
@@ -31,11 +32,14 @@ func main() {
 
 	producer := queue.NewProducer()
 
-	eventNotificationRepository := repositories.NewEventNotificationRepository(cache, producer)
+	eventNotificationRepository := repositories.NewEventNotificationRepository(
+		cache, producer, client)
 	companyRepository := repositories.NewCompanyRepostory(client)
 	jobRepository := repositories.NewJobRepository(client, companyRepository)
 
 	app := fiber.New()
+
+	app.Use(cors.New(cors.ConfigDefault))
 
 	app.Post("/companies", func(c *fiber.Ctx) error {
 		company := new(models.Company)
@@ -70,7 +74,6 @@ func main() {
 		}
 		err := jobRepository.Create(models.JobModel{
 			Name:      job.Name,
-			Interval:  job.Interval,
 			Companyid: c.Params("companyId"),
 		})
 		if err != nil {
@@ -97,6 +100,14 @@ func main() {
 			return c.Status(500).SendString(err.Error())
 		}
 		return c.SendStatus(200)
+	})
+
+	app.Get("/job-notifications-received/:jobId", func(c *fiber.Ctx) error {
+		notifications, err := eventNotificationRepository.GetByJobID(c.Params("jobId"))
+		if err != nil {
+			return c.Status(200).SendString("[]")
+		}
+		return c.JSON(notifications)
 	})
 
 	app.Get("/event-notifications/:id", func(c *fiber.Ctx) error {
