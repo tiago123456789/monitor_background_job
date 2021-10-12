@@ -22,6 +22,7 @@ Running application locally:
 =================================
 - Clone
 - Access **api**
+- Execute command **docker-compose up -d**
 - Execute command **god mod**
 - Create **.env** based in **.env.example** file.
 - Execute command **go run main.go** to create server
