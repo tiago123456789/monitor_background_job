@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { Button, Container, Form, FormGroup, Input, Label, Table } from "reactstrap"
-import axios from "axios"
 import moment from "moment"
 import { Link } from "react-router-dom"
 import {CopyToClipboard} from 'react-copy-to-clipboard';
+import JobService from "../services/JobService"
+
+const jobService = new JobService()
 
 export default (props) => {
     const [newJob, setNewJob] = useState({})
@@ -15,27 +17,22 @@ export default (props) => {
     }
 
     const getJobs = async () => {
-        const jobs = await axios.get("http://localhost:4000/companies/616369791b6b1e60f6470692/jobs")
-            .then(({ data }) => data)
+        const jobs = await jobService.getAll()
         setJobs(jobs)
     }
 
     const getEventNotifications = async () => {
-        const registers = await axios.get("http://localhost:4000/event-notifications/616369791b6b1e60f6470692")
-            .then(({ data }) => data)
+        const registers = await jobService.getEventNotifications()
         setEventNotifications(registers)
     }   
 
     const generateLinkJob = (job) => {
-        return (`http://localhost:4000/event-notifications/616369791b6b1e60f6470692/${job.id}`)
+        return jobService.generateLinkJob(job)
     }
 
     const submit = async (event) => {
         event.preventDefault();
-        await axios.post(
-            "http://localhost:4000/companies/616369791b6b1e60f6470692/jobs", 
-            { name: newJob.name }
-        )
+        await jobService.create({ name: newJob.name })
         setNewJob({ name: "" })
         await getJobs();
     }
@@ -56,7 +53,7 @@ export default (props) => {
 
         const intervalLastNotification = setInterval(async () => {
             await getEventNotifications()
-        }, 5000)
+        }, 30000)
 
         return () => clearInterval(intervalLastNotification);
     }, [])
@@ -64,7 +61,7 @@ export default (props) => {
     return (
         <>
             <Container>
-                <h1>Jobs</h1>
+                <h1 className="text-center">Jobs</h1>
 
                 <div>
                     <Form>

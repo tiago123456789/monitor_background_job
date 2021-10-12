@@ -3,7 +3,6 @@ package queue
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -80,8 +79,6 @@ func (c *Consumer) Receive(callback func(msgs ...*sqs.Message)) {
 
 	queueURL := urlResult.QueueUrl
 	for {
-		fmt.Printf("%s \n", time.Now())
-
 		msgResult, err := c.getMessages(svc, queueURL)
 		callback(msgResult.Messages...)
 		if err != nil {

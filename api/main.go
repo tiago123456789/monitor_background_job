@@ -80,7 +80,7 @@ func main() {
 		return c.JSON(accessToken)
 	})
 
-	app.Post("/companies", hasPermission, func(c *fiber.Ctx) error {
+	app.Post("/companies", func(c *fiber.Ctx) error {
 		company := new(models.Company)
 		if err := c.BodyParser(company); err != nil {
 			return c.Status(400).JSON(&fiber.Map{
@@ -89,6 +89,13 @@ func main() {
 			})
 		}
 
+		err := companyRepository.Create(*company)
+		if err != nil {
+			return c.Status(409).JSON(&fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
 		return c.SendStatus(201)
 	})
 

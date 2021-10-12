@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react"
 import { Button, Container, Table } from "reactstrap"
 import axios from "axios"
 import moment from "moment"
+import JobService from "../services/JobService"
+
+const jobService = new JobService()
 
 function App(props) {
   const [jobHistories, setJobHistories] = useState([])
 
   const getHistoryNotifications = async (jobId) => {
-    const registers = await axios.get(`http://localhost:4000/job-notifications-received/${jobId}`)
-      .then(({ data }) => data)
+    const registers = await jobService.getHistoryNotifications(jobId);
     setJobHistories(registers)
   }
 
@@ -19,14 +21,18 @@ function App(props) {
 
   }, [])
 
+  const isEmpty = () => {
+    return jobHistories.length == 0
+  }
+
   return (
     <>
       <Container>
-      {jobHistories.length == 0 && <p>No have registers</p>}
-        {jobHistories.length > 0 &&
+      { isEmpty() && <p>No have registers</p>}
+      { !isEmpty() > 0 &&
           (
             <>
-              <h1>Job details</h1>
+              <h1 className="text-center">Job details</h1>
               <Table>
                 <thead>
                   <tr>

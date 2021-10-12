@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 import { Alert, Button, Container, Form, FormGroup, Input, Label } from "reactstrap"
 import AuthService from "../services/AuthService"
 
 const authService = new AuthService()
 
 export default (props) => {
-    const [credential, setCredential] = useState({ email: "", password: "" })
+    const [credential, setCredential] = useState({ name: "", email: "", password: "" })
     const [error, setError] = useState(null);
 
     const handlerInputValue = (key, value) => {
@@ -16,27 +15,27 @@ export default (props) => {
     const submit = async (event) => {
         event.preventDefault()
         try {
-            const response = await authService.authenticate(credential)
-            localStorage.setItem("accessToken", response.accessToken)
-            setError(null)
-            props.history.push("/jobs-monitored")
+            await authService.create(credential)
+            props.history.push("/login")
         } catch(error) {
             setError(error.response.data.message)
         }
     }
 
-    useEffect(() => {
-        if (authService.isAuthenticated()) {
-            props.history.push("/jobs-monitored")
-        }
-    }, [])
-
     return (
         <>
             <Container>
-                <h1>Login</h1>
+                <h1>Register</h1>
                 { error && <Alert color="danger" >{error}</Alert> }
                 <Form onSubmit={submit}>
+                <FormGroup>
+                        <Label for="name">Name:</Label>
+                        <Input
+                            value={credential.name}
+                            onChange={(event) => handlerInputValue("name", event.target.value)}
+                            type="text" name="name"
+                            id="name" />
+                    </FormGroup>
                     <FormGroup>
                         <Label for="email">Email:</Label>
                         <Input
@@ -53,11 +52,7 @@ export default (props) => {
                             type="password" name="password"
                             id="password" />
                     </FormGroup>
-                    <Button className="mt-1">Login</Button>&nbsp;
-                    <Link to="/register">
-                    <Button className="mt-1">Register</Button>
-
-                    </Link>
+                    <Button className="mt-1">Save</Button>
                 </Form>
             </Container>
         </>

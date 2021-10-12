@@ -1,2 +1,4 @@
 api/.env
 proccess-events/.env
+frontend/.env
+frontend/node_modules/
