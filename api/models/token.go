@@ -20,7 +20,6 @@ func NewToken() *Token {
 }
 
 func (t *Token) IsValid(tokenString string) (string, error) {
-	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Token invalid")
@@ -35,7 +34,6 @@ func (t *Token) IsValid(tokenString string) (string, error) {
 }
 
 func (t *Token) Get(payload jwt.Claims) (string, error) {
-	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd")
 	atClaims := payload
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	token, err := at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
