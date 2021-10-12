@@ -8,6 +8,15 @@ export default class JobService extends AbstractService {
         .then(this.extractReponse)
     }
 
+    createAlert(alert) {
+        return this.httpClient()
+        .post(
+            `${process.env.REACT_APP_URL_BASE}companies/${this.getCompanyId()}/jobs/${alert.jobId}/alerts`,
+             alert
+        )
+        .then(this.extractReponse)
+    }
+
     getAll() {
         return this.httpClient()
             .get(`${process.env.REACT_APP_URL_BASE}companies/${this.getCompanyId()}/jobs`)

@@ -25,12 +25,6 @@ export default (props) => {
         }
     }
 
-    useEffect(() => {
-        if (authService.isAuthenticated()) {
-            props.history.push("/jobs-monitored")
-        }
-    }, [])
-
     return (
         <>
             <Container>
