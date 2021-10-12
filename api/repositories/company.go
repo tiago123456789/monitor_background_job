@@ -14,6 +14,7 @@ import (
 type CompanyRepositoryInterface interface {
 	Create(company models.Company) error
 	FindByName(name string) (models.Company, error)
+	FindByEmail(email string) (models.Company, error)
 	FindByID(id string) (models.Company, error)
 }
 
@@ -45,6 +46,20 @@ func (c *CompanyRepository) Create(company models.Company) error {
 		return err
 	}
 	return nil
+}
+
+func (c *CompanyRepository) FindByEmail(email string) (models.Company, error) {
+	var filter = &bson.D{
+		{"email", email},
+	}
+
+	var result models.Company
+	collection := c.Client.Database("monitor").Collection("companies")
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return models.Company{}, err
+	}
+	return result, nil
 }
 
 func (c *CompanyRepository) FindByName(name string) (models.Company, error) {
