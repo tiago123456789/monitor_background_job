@@ -13,6 +13,7 @@ import (
 
 type LastEventNotificationRepositoryInterface interface {
 	Register(event models.EventNotification) error
+	FindByCompanyId(companyId string) ([]models.EventNotification, error)
 }
 
 type LastEventNotificationRepository struct {
@@ -78,4 +79,24 @@ func (e *LastEventNotificationRepository) Register(event models.EventNotificatio
 		return err
 	}
 	return nil
+}
+
+func (e *LastEventNotificationRepository) FindByCompanyId(companyId string) ([]models.EventNotification, error) {
+	filter := &bson.D{
+		{"companyId", companyId},
+	}
+
+	var results []models.EventNotification
+	collection := e.Client.Database(os.Getenv("DATABASE_NAME")).Collection("last_notifications_received")
+	ctx := context.TODO()
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return []models.EventNotification{}, err
+	}
+
+	if err = cursor.All(ctx, &results); err != nil {
+		return []models.EventNotification{}, err
+	}
+
+	return results, nil
 }

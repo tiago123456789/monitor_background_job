@@ -24,7 +24,7 @@ export default (props) => {
 
     const getAlerts = async () => {
         const registers = await jobService.getAllAlerts(props.match.params.id)
-        setAlerts(registers)
+        setAlerts(registers || [])
     }
 
 
@@ -91,8 +91,8 @@ export default (props) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {
-                            alerts.map(item => {
+                        { alerts.length > 0 &&
+                            (alerts).map(item => {
                                 return (
                                     <tr key={item.id}>
                                         <th scope="row">{item.id}</th>

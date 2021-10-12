@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
+	httpClient "process-events/http"
+
 	"process-events/config"
 	"process-events/models"
 	"process-events/queue"
@@ -18,54 +17,70 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Alert struct {
-	TimeInMinutes int16
-	Url           string
-	Payload       string
-}
-
 func triggerAlertTheCompanies() {
 	mongo := config.NewConnection()
 	companyRepository := repositories.NewCompany(mongo)
 	producer := queue.NewProducer()
 
-	uptimeTicker := time.NewTicker(5 * time.Minute)
+	uptimeTicker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-uptimeTicker.C:
 			results, _ := companyRepository.GetAll()
 			for _, value := range results {
 				producer.Publish(os.Getenv("SQS_QUEUE_ALERT"), value)
-				fmt.Printf("Trigger alert the company %v \n", value.ID)
 			}
 		}
 	}
 }
 
-func post(alert Alert) {
-	req, err := http.NewRequest("POST", alert.Url, bytes.NewBuffer([]byte(alert.Payload)))
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-}
-
 func handlerAlertTheCompany() {
-
-	alertTest := &Alert{
-		TimeInMinutes: 5,
-		Url:           "https://webhook.site/2d1c2902-5153-4867-9bae-6f53a70a7624",
-		Payload:       "{ \"message\": \"text\" }",
-	}
+	mongo := config.NewConnection()
+	alertRepository := repositories.NewAlertRepository(mongo)
+	lastNotificationRepository := repositories.NewLastEventNotificationRepository(mongo)
 
 	queue.NewConsumer().Receive(os.Getenv("SQS_QUEUE_ALERT"), func(msgs ...*sqs.Message) {
 		for _, msg := range msgs {
 			var event models.CompanyTriggerAlert
 			json.Unmarshal([]byte(*msg.Body), &event)
-			fmt.Printf("Alert company %v \n", event)
-			post(*alertTest)
+
+			alerts, err := alertRepository.FindByCompanyId(event.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(alerts) == 0 {
+				continue
+			}
+
+			lastNotifications, err := lastNotificationRepository.FindByCompanyId(event.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			mapLastNotificaiton := make(map[string]models.EventNotification)
+
+			for _, value := range lastNotifications {
+				id := value.ID.Hex()
+				mapLastNotificaiton[id] = value
+			}
+
+			for i := 0; i < len(alerts); i++ {
+				alert := alerts[i]
+				if _, ok := mapLastNotificaiton[alert.JobId]; !ok {
+					httpClient.Post(alert)
+				}
+
+				if _, ok := mapLastNotificaiton[alert.JobId]; ok {
+					lastNotification := mapLastNotificaiton[alert.JobId]
+					dateLastNotication := lastNotification.OccourAt.Add(
+						time.Duration(alert.TimeInMinutes) * time.Minute)
+
+					if dateLastNotication.Before(time.Now().UTC()) {
+						httpClient.Post(alert)
+					}
+				}
+			}
 		}
 	})
 }
@@ -91,16 +106,4 @@ func main() {
 		}
 	})
 
-	// queue.NewConsumer().Receive(os.Getenv("SQS_QUEUE_ALERT"), func(msgs ...*sqs.Message) {
-	// 	for _, msg := range msgs {
-	// 		var event models.CompanyTriggerAlert
-	// 		json.Unmarshal([]byte(*msg.Body), &event)
-	// 		fmt.Printf("Trigger alert the company %v \n", event)
-
-	// 		// eventNotificationRepository.Create(event)
-	// 		// lastEventNotificationRepository.Register(event)
-	// 	}
-	// })
-
-	// https://webhook.site/2d1c2902-5153-4867-9bae-6f53a70a7624
 }
