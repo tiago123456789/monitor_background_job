@@ -2,7 +2,6 @@ package queue
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -62,9 +61,7 @@ func NewConsumer() *Consumer {
 	return &Consumer{}
 }
 
-func (c *Consumer) Receive(callback func(msgs ...*sqs.Message)) {
-	queueName := os.Getenv("SQS_QUEUE")
-
+func (c *Consumer) Receive(queueName string, callback func(msgs ...*sqs.Message)) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))

@@ -95,6 +95,11 @@ export default (props) => {
                                         <td>{job.Name}</td>
                                         <td>{getLastNotication(job)}</td>
                                         <td>
+                                            <Link to={`/jobs-monitored/${job.id}/alerts`} >
+                                                <Button >
+                                                    Alerts
+                                                </Button>
+                                            </Link>&nbsp;
                                             <Link to={`/jobs-monitored/${job.id}`} >
                                                 <Button >
                                                     More details

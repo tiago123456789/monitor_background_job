@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/PrivateRoute"
 import Register from "./pages/Register";
+import ListAlerts from "./pages/ListAlerts"
 
 function App() {
 
@@ -18,6 +19,8 @@ function App() {
           <Route exact path="/register" component={Register} />
           <PrivateRoute exact path="/jobs-monitored" component={ListJob} />
           <PrivateRoute exact path="/jobs-monitored/:id" component={JobDetail} />
+          <PrivateRoute exact path="/jobs-monitored/:id/alerts" component={ListAlerts} />
+
           <Redirect to="/login" />
         </Switch>
       </BrowserRouter>

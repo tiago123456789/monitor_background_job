@@ -31,7 +31,7 @@ func main() {
 		cache, producer, mongoClient)
 	companyRepository := repositories.NewCompanyRepostory(mongoClient)
 	jobRepository := repositories.NewJobRepository(mongoClient, companyRepository)
-
+	alertRepository := repositories.NewAlertRepository(mongoClient)
 	authService := services.NewAuth(companyRepository)
 
 	app := fiber.New()
@@ -119,6 +119,35 @@ func main() {
 			})
 		}
 		return c.SendStatus(201)
+	})
+
+	app.Post("/companies/:companyId/jobs/:jobId/alerts", hasPermission, func(c *fiber.Ctx) error {
+		alert := new(models.Alert)
+		if err := c.BodyParser(alert); err != nil {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+		alert.CompanyId = c.Params("companyId")
+		err := alertRepository.Create(*alert)
+		if err != nil {
+			fmt.Print(err)
+			return c.Status(409).JSON(&fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+		return c.SendStatus(201)
+	})
+
+	app.Get("/companies/:companyId/jobs/:jobId/alerts", hasPermission, func(c *fiber.Ctx) error {
+		results, err := alertRepository.FindByCompanyIdAndJobId(
+			c.Params("companyId"), c.Params("jobId"))
+		if err != nil {
+			return c.Status(404).SendString("[]")
+		}
+		return c.JSON(results)
 	})
 
 	app.Get("/companies/:companyId/jobs", hasPermission, func(c *fiber.Ctx) error {
