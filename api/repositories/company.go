@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/tiago123456789/monitor_background_job/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,7 +34,7 @@ func (c *CompanyRepository) Create(company models.Company) error {
 	if result != (models.Company{}) {
 		return errors.New("Name can't used")
 	}
-	collection := c.Client.Database("monitor").Collection("companies")
+	collection := c.Client.Database(os.Getenv("DATABASE_NAME")).Collection("companies")
 	password, err := bcrypt.GenerateFromPassword([]byte(company.Password), 10)
 	if err != nil {
 		return err
@@ -54,7 +55,7 @@ func (c *CompanyRepository) FindByEmail(email string) (models.Company, error) {
 	}
 
 	var result models.Company
-	collection := c.Client.Database("monitor").Collection("companies")
+	collection := c.Client.Database(os.Getenv("DATABASE_NAME")).Collection("companies")
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return models.Company{}, err
@@ -68,7 +69,7 @@ func (c *CompanyRepository) FindByName(name string) (models.Company, error) {
 	}
 
 	var result models.Company
-	collection := c.Client.Database("monitor").Collection("companies")
+	collection := c.Client.Database(os.Getenv("DATABASE_NAME")).Collection("companies")
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return models.Company{}, err
@@ -81,7 +82,7 @@ func (c *CompanyRepository) FindByID(id string) (models.Company, error) {
 	filter := bson.M{"_id": bson.M{"$eq": objID}}
 
 	var result models.Company
-	collection := c.Client.Database("monitor").Collection("companies")
+	collection := c.Client.Database(os.Getenv("DATABASE_NAME")).Collection("companies")
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return models.Company{}, err

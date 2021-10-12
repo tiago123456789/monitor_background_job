@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"os"
 	"process-events/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,7 +25,7 @@ func NewEventNotificationRepository(client *mongo.Client) *EventNotificationRepo
 
 func (e *EventNotificationRepository) Create(event models.EventNotification) error {
 	event.ID = primitive.NewObjectID()
-	collection := e.Client.Database("monitor").Collection("notifications_received")
+	collection := e.Client.Database(os.Getenv("DATABASE_NAME")).Collection("notifications_received")
 	_, err := collection.InsertOne(context.TODO(), event)
 	if err == mongo.ErrNoDocuments {
 		return err
