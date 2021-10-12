@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 
 	"github.com/tiago123456789/monitor_background_job/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,7 +41,7 @@ func (j *JobRepository) Create(job models.JobModel) error {
 		return errors.New("Company informated not exist")
 	}
 
-	collection := j.Client.Database("monitor").Collection("jobs")
+	collection := j.Client.Database(os.Getenv("DATABASE_NAME")).Collection("jobs")
 	job.ID = primitive.NewObjectID()
 	_, err := collection.InsertOne(context.TODO(), job)
 	if err != nil {
@@ -55,7 +56,7 @@ func (j *JobRepository) FindByName(name string) (models.JobModel, error) {
 	}
 
 	var result models.JobModel
-	collection := j.Client.Database("monitor").Collection("jobs")
+	collection := j.Client.Database(os.Getenv("DATABASE_NAME")).Collection("jobs")
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return models.JobModel{}, err
@@ -69,7 +70,7 @@ func (j *JobRepository) FindByCompanyId(companyId string) ([]models.JobModel, er
 	}
 
 	var results []models.JobModel
-	collection := j.Client.Database("monitor").Collection("jobs")
+	collection := j.Client.Database(os.Getenv("DATABASE_NAME")).Collection("jobs")
 	ctx := context.TODO()
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {

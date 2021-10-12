@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/tiago123456789/monitor_background_job/config"
@@ -103,7 +104,7 @@ func (e *EventNotificationRepository) GetByJobID(jobId string) ([]models.Notific
 	findOptions.SetSort(bson.D{{"occourat", -1}})
 
 	var results []models.NotificationReceived
-	collection := e.Client.Database("monitor").Collection("notifications_received")
+	collection := e.Client.Database(os.Getenv("DATABASE_NAME")).Collection("notifications_received")
 	ctx := context.TODO()
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
