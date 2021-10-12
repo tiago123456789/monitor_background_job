@@ -22,12 +22,14 @@ func main() {
 
 	mongo := config.NewConnection()
 	eventNotificationRepository := repositories.NewEventNotificationRepository(mongo)
+	lastEventNotificationRepository := repositories.NewLastEventNotificationRepository(mongo)
 
 	queue.NewConsumer().Receive(func(msgs ...*sqs.Message) {
 		for _, msg := range msgs {
 			var event models.EventNotification
 			json.Unmarshal([]byte(*msg.Body), &event)
 			eventNotificationRepository.Create(event)
+			lastEventNotificationRepository.Register(event)
 		}
 	})
 }
