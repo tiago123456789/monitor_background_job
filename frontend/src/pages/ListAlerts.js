@@ -1,11 +1,12 @@
-import React, { useState } from "react"
-import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap"
+import React, { useEffect, useState } from "react"
+import { Button, Container, Form, FormGroup, Input, Label, Table } from "reactstrap"
 import JobService from "../services/JobService"
 
 const jobService = new JobService()
 
 export default (props) => {
     const [alert, setAlert] = useState({ timeInMinutes: 5 })
+    const [alerts, setAlerts] = useState([])
 
     const handlerInputValue = (key, value) => {
         setAlert({...alert, [key]: value })
@@ -20,6 +21,21 @@ export default (props) => {
             payload: ""
         })
     }
+
+    const getAlerts = async () => {
+        const registers = await jobService.getAllAlerts(props.match.params.id)
+        setAlerts(registers)
+    }
+
+
+    useEffect(() => {
+        (async () => {
+            await getAlerts()
+        })()
+
+
+    }, [])
+
 
     return (
         <>
@@ -62,6 +78,36 @@ export default (props) => {
                         <Button type="submit" onClick={submit} className="mt-1">Novo job</Button>
                     </Form>
                 </div>
+                <br/>
+                <h3>Alerts</h3>
+                <Table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Time in minutes</th>
+                            <th>Url</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            alerts.map(item => {
+                                return (
+                                    <tr key={item.id}>
+                                        <th scope="row">{item.id}</th>
+                                        <td>{item.name || "" }</td>
+                                        <td>{item.timeInMinutes}</td>
+                                        <td>{item.url}</td>
+                                        <td>{item.payload}</td>
+
+                                    </tr>
+                                )
+                            })
+                        }
+
+                    </tbody>
+                </Table>
             </Container>
         </>
     )

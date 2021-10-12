@@ -32,7 +32,6 @@ func main() {
 	companyRepository := repositories.NewCompanyRepostory(mongoClient)
 	jobRepository := repositories.NewJobRepository(mongoClient, companyRepository)
 	alertRepository := repositories.NewAlertRepository(mongoClient)
-
 	authService := services.NewAuth(companyRepository)
 
 	app := fiber.New()
@@ -140,6 +139,15 @@ func main() {
 			})
 		}
 		return c.SendStatus(201)
+	})
+
+	app.Get("/companies/:companyId/jobs/:jobId/alerts", hasPermission, func(c *fiber.Ctx) error {
+		results, err := alertRepository.FindByCompanyIdAndJobId(
+			c.Params("companyId"), c.Params("jobId"))
+		if err != nil {
+			return c.Status(404).SendString("[]")
+		}
+		return c.JSON(results)
 	})
 
 	app.Get("/companies/:companyId/jobs", hasPermission, func(c *fiber.Ctx) error {
